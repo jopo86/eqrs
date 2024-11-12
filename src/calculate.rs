@@ -1,17 +1,8 @@
-use crate::parse::{parse, post_process::post_process};
-
-use super::{
-    parse::{token::Token, operator::Op},
-    variable::VarTable,
+use crate::{
+    helpers::find_closing_par,
+    tokenize::{operator::Op, token::Token},
+    variable::{insert_vars, VarTable},
 };
-
-pub mod prelude {
-    pub use super::{calc, eval};
-}
-
-pub fn eval(str: &str, var_table: Option<&VarTable>) -> f64 {
-    calc(&post_process(&parse(str)), var_table)
-}
 
 pub fn calc(expr: &Vec<Token>, var_table: Option<&VarTable>) -> f64 {
     let mut expr = expr.clone();
@@ -23,25 +14,10 @@ pub fn calc(expr: &Vec<Token>, var_table: Option<&VarTable>) -> f64 {
     let mut i = 0;
     while i < expr.len() {
         if let Token::ParL = expr[i] {
-            let mut level = 0;
-            let mut j = i + 1;
-            while j < expr.len() {
-                match expr[j] {
-                    Token::ParL => level += 1,
-                    Token::ParR => {
-                        if level == 0 {
-                            expr[i] = Token::Num(calc(&Vec::from(&expr[(i + 1)..j]), None));
-                            for _ in i..j {
-                                expr.remove(i + 1);
-                            }
-                            break;
-                        } else {
-                            level -= 1;
-                        }
-                    },
-                    _ => {},
-                }
-                j += 1;
+            let j = find_closing_par(&expr, i).expect("failed to find closing parenthesis");
+            expr[i] = Token::Num(calc(&Vec::from(&expr[(i + 1)..j]), None));
+            for _ in i..j {
+                expr.remove(i + 1);
             }
         }
 
@@ -92,11 +68,10 @@ pub fn calc(expr: &Vec<Token>, var_table: Option<&VarTable>) -> f64 {
                     } else {
                         // err unknown
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
-        
 
         i += 1;
     }
@@ -115,11 +90,10 @@ pub fn calc(expr: &Vec<Token>, var_table: Option<&VarTable>) -> f64 {
                     } else {
                         // err unknown
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
-        
 
         i += 1;
     }
@@ -131,64 +105,73 @@ pub fn calc(expr: &Vec<Token>, var_table: Option<&VarTable>) -> f64 {
     }
 }
 
-pub fn insert_vars(expr: &mut Vec<Token>, var_table: &VarTable) {
-    for tk in expr.iter_mut() {
-        if let Token::Var(c) = *tk {
-            *tk = Token::Num(var_table[c]);
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tokenize::tokenize;
+    use crate::post_process::post_process;
+    use crate::variable::VarTable;
 
-    const TOLERANCE: f64 = 1e-4;
-
-    fn approx_eq(a: f64, b: f64) -> bool {
-        (a - b).abs() < TOLERANCE
+    #[test]
+    fn calc_1() {
+        let tokens = post_process(&tokenize("2 + 2"));
+        assert_eq!(calc(&tokens, None), 4.0);
     }
 
     #[test]
-    fn eval_no_vars_1() {
-        assert!(approx_eq(eval("(-3 + 5)(-2) / (7 % 3) + 4 ^ (-2) - (6 * -3 + 2) / 2 + 8 % (-3)", None), 6.0625));
+    fn calc_2() {
+        let tokens = post_process(&tokenize("2 + 2 * 9 - 8"));
+        assert_eq!(calc(&tokens, None), 12.0);
     }
 
     #[test]
-    fn eval_no_vars_2() {
-        assert!(approx_eq(eval("(-4 + 6)(3 - 5) / (10 % 4) + 5 ^ (-1) - (8 * -2 + 3) / 3 + 9 % (-4)", None), 3.5333));
+    fn calc_3() {
+        let tokens = post_process(&tokenize("3 * (2 + 1)"));
+        assert_eq!(calc(&tokens, None), 9.0);
     }
 
     #[test]
-    fn eval_vars_1() {
+    fn calc_4() {
+        let tokens = post_process(&tokenize("4 ^ 2 + 3"));
+        assert_eq!(calc(&tokens, None), 19.0);
+    }
+
+    #[test]
+    fn calc_5() {
+        let tokens = post_process(&tokenize("10 / 2 + 3 * 2"));
+        assert_eq!(calc(&tokens, None), 11.0);
+    }
+
+    #[test]
+    fn calc_6() {
+        let tokens = post_process(&tokenize("-(3 + 4)"));
+        assert_eq!(calc(&tokens, None), -7.0);
+    }
+
+    #[test]
+    fn calc_with_vars_1() {
         let mut vt = VarTable::new();
-        let expr = "(x - 4)(y + 6) / (z % 5) + (xy)^(-1) - (3z + 2) / 2 + (x % y)";
-
-        vt.set('x', -3.0);
-        vt.set('y', 7.0);
-        vt.set('z', 4.0);
-        assert!(approx_eq(eval(expr, Some(&vt)), -32.7976));
-    }
-
-    #[test]
-    fn eval_vars_2() {
-        let mut vt = VarTable::new();
-        let expr = "(x - 4)(y + 6) / (z % 5) + (xy)^(-1) - (3z + 2) / 2 + (x % y)";
-
         vt.set('x', 5.0);
-        vt.set('y', -2.0);
-        vt.set('z', 6.0);
-        assert!(approx_eq(eval(expr, Some(&vt)), -5.1));
+        vt.set('y', 3.0);
+        let tokens = post_process(&tokenize("x + y * 2"));
+        assert_eq!(calc(&tokens, Some(&vt)), 11.0);
     }
 
     #[test]
-    fn eval_vars_3() {
+    fn calc_with_vars_2() {
         let mut vt = VarTable::new();
-        let expr = "(x - 4)(y + 6) / (z % 5) + (xy)^(-1) - (3z + 2) / 2 + (x % y)";
+        vt.set('a', 2.0);
+        vt.set('b', 4.0);
+        let tokens = post_process(&tokenize("a * b + 3"));
+        assert_eq!(calc(&tokens, Some(&vt)), 11.0);
+    }
 
-        vt.set('x', 8.0);
-        vt.set('y', -3.0);
-        vt.set('z', 7.0);
-        assert!(approx_eq(eval(expr, Some(&vt)), -3.5417));
+    #[test]
+    fn calc_with_vars_3() {
+        let mut vt = VarTable::new();
+        vt.set('m', 7.0);
+        vt.set('n', 2.0);
+        let tokens = post_process(&tokenize("m / n - 1"));
+        assert_eq!(calc(&tokens, Some(&vt)), 2.5);
     }
 }

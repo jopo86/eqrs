@@ -1,8 +1,5 @@
+use crate::tokenize::token::Token;
 use std::collections::HashMap;
-
-pub mod prelude {
-    pub use super::VarTable;
-}
 
 pub struct VarTable(HashMap<char, f64>);
 
@@ -24,11 +21,21 @@ impl VarTable {
     }
 }
 
+pub fn insert_vars(expr: &mut Vec<Token>, var_table: &VarTable) {
+    for tk in expr.iter_mut() {
+        if let Token::Var(c) = *tk {
+            *tk = Token::Num(var_table[c]);
+        }
+    }
+}
+
 impl std::ops::Index<char> for VarTable {
     type Output = f64;
 
     fn index(&self, index: char) -> &Self::Output {
-        self.0.get(&index).expect(&format!("eqrs: var {index} not found"))
+        self.0
+            .get(&index)
+            .expect(&format!("eqrs: var {index} not found"))
     }
 }
 
@@ -50,7 +57,8 @@ mod tests {
         assert_eq!(vt['x'], 10.0);
     }
 
-    #[test] #[should_panic]
+    #[test]
+    #[should_panic]
     fn idx_no_exist() {
         let vt = VarTable::new();
         vt['x'];
