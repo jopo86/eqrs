@@ -1,2 +1,2 @@
 # eqrs
-Rust equation parser/evaluator with variable support
+Rust expression parser/evaluator with variable support
