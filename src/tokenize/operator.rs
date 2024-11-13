@@ -21,17 +21,13 @@ impl Op {
     }
 }
 
-#[derive(Debug)]
-pub enum OpParseErr {
+#[derive(Debug, PartialEq)]
+pub enum OpParseError {
     NotOp,
 }
 
-pub fn is_op(c: &char) -> bool {
-    ['+', '-', '*', '/', '%', '^'].contains(c)
-}
-
 impl Op {
-    pub fn parse(c: &char) -> Result<Self, OpParseErr> {
+    pub fn parse(c: &char) -> Result<Self, OpParseError> {
         match c {
             '+' => Ok(Self::Add),
             '-' => Ok(Self::Sub),
@@ -39,7 +35,11 @@ impl Op {
             '/' => Ok(Self::Div),
             '%' => Ok(Self::Mod),
             '^' => Ok(Self::Pow),
-            _ => Err(OpParseErr::NotOp),
+            _ => Err(OpParseError::NotOp),
         }
+    }
+
+    pub fn is_valid(c: &char) -> bool {
+        ['+', '-', '*', '/', '%', '^'].contains(c)
     }
 }

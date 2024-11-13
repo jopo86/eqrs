@@ -4,10 +4,27 @@ pub mod post_process;
 pub mod tokenize;
 pub mod variable;
 
-use crate::{calculate::calc, post_process::post_process, tokenize::tokenize, variable::VarTable};
+use crate::{
+    calculate::{calc, CalcError},
+    post_process::post_process,
+    tokenize::{tokenize, TokenizeError},
+    variable::VarTable,
+};
 
-pub fn eval(str: &str, var_table: Option<&VarTable>) -> f64 {
-    calc(&post_process(&tokenize(str)), var_table)
+#[derive(Debug, PartialEq)]
+pub enum EvalError {
+    TokenizeError(TokenizeError),
+    CalcError(CalcError),
+}
+
+pub fn eval(str: &str, var_table: Option<&VarTable>) -> Result<f64, EvalError> {
+    match tokenize(str) {
+        Ok(tokens) => match calc(&post_process(&tokens), var_table) {
+            Ok(val) => Ok(val),
+            Err(e) => Err(EvalError::CalcError(e)),
+        },
+        Err(e) => Err(EvalError::TokenizeError(e)),
+    }
 }
 
 #[cfg(test)]
@@ -26,7 +43,8 @@ mod tests {
             eval(
                 "(-3 + 5)(-2) / (7 % 3) + 4 ^ (-2) - (6 * -3 + 2) / 2 + 8 % (-3)",
                 None
-            ),
+            )
+            .unwrap(),
             6.0625
         ));
     }
@@ -37,7 +55,8 @@ mod tests {
             eval(
                 "(-4 + 6)(3 - 5) / (10 % 4) + 5 ^ (-1) - (8 * -2 + 3) / 3 + 9 % (-4)",
                 None
-            ),
+            )
+            .unwrap(),
             3.5333
         ));
     }
@@ -50,7 +69,7 @@ mod tests {
         vt.set('x', -3.0);
         vt.set('y', 7.0);
         vt.set('z', 4.0);
-        assert!(approx_eq(eval(expr, Some(&vt)), -32.7976));
+        assert!(approx_eq(eval(expr, Some(&vt)).unwrap(), -32.7976));
     }
 
     #[test]
@@ -61,7 +80,7 @@ mod tests {
         vt.set('x', 5.0);
         vt.set('y', -2.0);
         vt.set('z', 6.0);
-        assert!(approx_eq(eval(expr, Some(&vt)), -5.1));
+        assert!(approx_eq(eval(expr, Some(&vt)).unwrap(), -5.1));
     }
 
     #[test]
@@ -72,6 +91,6 @@ mod tests {
         vt.set('x', 8.0);
         vt.set('y', -3.0);
         vt.set('z', 7.0);
-        assert!(approx_eq(eval(expr, Some(&vt)), -3.5417));
+        assert!(approx_eq(eval(expr, Some(&vt)).unwrap(), -3.5417));
     }
 }

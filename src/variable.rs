@@ -21,12 +21,23 @@ impl VarTable {
     }
 }
 
-pub fn insert_vars(expr: &mut Vec<Token>, var_table: &VarTable) {
+#[derive(Debug, PartialEq)]
+pub enum InsertVarsError {
+    VarNotFound,
+}
+
+pub fn insert_vars(expr: &Vec<Token>, var_table: &VarTable) -> Result<Vec<Token>, InsertVarsError> {
+    let mut expr = expr.clone();
     for tk in expr.iter_mut() {
         if let Token::Var(c) = *tk {
-            *tk = Token::Num(var_table[c]);
+            match var_table.get(c) {
+                Some(n) => *tk = Token::Num(n),
+                None => return Err(InsertVarsError::VarNotFound),
+            }
         }
     }
+
+    Ok(expr)
 }
 
 impl std::ops::Index<char> for VarTable {

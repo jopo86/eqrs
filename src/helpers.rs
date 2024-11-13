@@ -28,19 +28,19 @@ mod tests {
 
     #[test]
     fn find_closing_par_1() {
-        let tokens = tokenize("(1 + 2)");
+        let tokens = tokenize("(1 + 2)").unwrap();
         assert_eq!(find_closing_par(&tokens, 0), Some(4));
     }
 
     #[test]
     fn find_closing_par_2() {
-        let tokens = tokenize("3 * (1 + (2 * 3))");
+        let tokens = tokenize("3 * (1 + (2 * 3))").unwrap();
         assert_eq!(find_closing_par(&tokens, 2), Some(10));
     }
 
     #[test]
     fn find_closing_par_3() {
-        let tokens = tokenize("(1 + (2 * (3 - 4)))");
+        let tokens = tokenize("(1 + (2 * (3 - 4)))").unwrap();
         assert_eq!(find_closing_par(&tokens, 0), Some(12));
         assert_eq!(find_closing_par(&tokens, 3), Some(11));
         assert_eq!(find_closing_par(&tokens, 6), Some(10));

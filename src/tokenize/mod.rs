@@ -1,16 +1,21 @@
 pub mod operator;
 pub mod token;
 
-use token::Token;
+use token::{Token, TokenParseError};
 
-pub fn tokenize(str: &str) -> Vec<Token> {
+#[derive(Debug, PartialEq)]
+pub enum TokenizeError {
+    TokenParseError(TokenParseError),
+}
+
+pub fn tokenize(str: &str) -> Result<Vec<Token>, TokenizeError> {
     let mut vec = vec![];
     let chars: Vec<char> = str.chars().collect();
 
     let mut i = 0;
     while i < str.len() {
         let c = chars[i];
-
+        
         if c.is_whitespace() {
             i += 1;
             continue;
@@ -31,13 +36,16 @@ pub fn tokenize(str: &str) -> Vec<Token> {
             ));
             i = j - 1;
         } else {
-            vec.push(Token::parse(&c).expect("token parse should work with anything but a digit"))
+            match Token::parse(&c) {
+                Ok(tk) => vec.push(tk),
+                Err(e) => return Err(TokenizeError::TokenParseError(e)),
+            }
         }
 
         i += 1;
     }
 
-    vec
+    Ok(vec)
 }
 
 #[cfg(test)]
@@ -49,7 +57,7 @@ mod tests {
     fn tokenize_1() {
         assert_eq!(
             tokenize("2 + 2"),
-            vec![Token::Num(2.0), Token::Op(Op::Add), Token::Num(2.0)]
+            Ok(vec![Token::Num(2.0), Token::Op(Op::Add), Token::Num(2.0)])
         );
     }
 
@@ -57,7 +65,7 @@ mod tests {
     fn tokenize_2() {
         assert_eq!(
             tokenize("2 + 2 * 9 - 8"),
-            vec![
+            Ok(vec![
                 Token::Num(2.0),
                 Token::Op(Op::Add),
                 Token::Num(2.0),
@@ -65,7 +73,7 @@ mod tests {
                 Token::Num(9.0),
                 Token::Op(Op::Sub),
                 Token::Num(8.0)
-            ]
+            ])
         );
     }
 
@@ -73,7 +81,7 @@ mod tests {
     fn tokenize_3() {
         assert_eq!(
             tokenize("x(7xy + 6) * 3y^2"),
-            vec![
+            Ok(vec![
                 Token::Var('x'),
                 Token::ParL,
                 Token::Num(7.0),
@@ -87,7 +95,17 @@ mod tests {
                 Token::Var('y'),
                 Token::Op(Op::Pow),
                 Token::Num(2.0)
-            ]
+            ])
+        );
+    }
+
+    #[test]
+    fn tokenize_4() {
+        assert_eq!(
+            tokenize("x + &"),
+            Err(TokenizeError::TokenParseError(
+                TokenParseError::IsPunctuation
+            ))
         );
     }
 }

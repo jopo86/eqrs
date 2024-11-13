@@ -11,7 +11,6 @@ pub fn post_process(vec: &Vec<Token>) -> Vec<Token> {
     // "-n" --> "(0-n)"
     // "-(...)" --> "(0-(...))"
     while i < vec.len() - 1 {
-        
         if let Token::Op(Op::Sub) = vec[i] {
             if i == 0 || matches!(vec[i - 1], Token::Op(_)) || matches!(vec[i - 1], Token::ParL) {
                 vec.insert(i, Token::Num(0.0));
@@ -61,7 +60,7 @@ mod tests {
     #[test]
     fn post_process_1() {
         assert_eq!(
-            post_process(&tokenize("2 + 2")),
+            post_process(&tokenize("2 + 2").unwrap()),
             vec![Token::Num(2.0), Token::Op(Op::Add), Token::Num(2.0)]
         );
     }
@@ -69,7 +68,7 @@ mod tests {
     #[test]
     fn post_process_2() {
         assert_eq!(
-            post_process(&tokenize("2 + 2 * 9 - 8")),
+            post_process(&tokenize("2 + 2 * 9 - 8").unwrap()),
             vec![
                 Token::Num(2.0),
                 Token::Op(Op::Add),
@@ -85,7 +84,7 @@ mod tests {
     #[test]
     fn post_process_3() {
         assert_eq!(
-            post_process(&tokenize("x(7xy + 6) * 3y^2")),
+            post_process(&tokenize("x(7xy + 6) * 3y^2").unwrap()),
             vec![
                 Token::Var('x'),
                 Token::Op(Op::Mul),
@@ -111,7 +110,7 @@ mod tests {
     #[test]
     fn post_process_4() {
         assert_eq!(
-            post_process(&tokenize("2x + 3(4 + 5)")),
+            post_process(&tokenize("2x + 3(4 + 5)").unwrap()),
             vec![
                 Token::Num(2.0),
                 Token::Op(Op::Mul),
@@ -131,7 +130,7 @@ mod tests {
     #[test]
     fn post_process_5() {
         assert_eq!(
-            post_process(&tokenize("-(3 + 4)")),
+            post_process(&tokenize("-(3 + 4)").unwrap()),
             vec![
                 Token::ParL,
                 Token::Num(0.0),

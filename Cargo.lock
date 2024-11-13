@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "eqrs"
+name = "exprs"
 version = "0.1.0"
