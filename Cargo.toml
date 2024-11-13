@@ -2,5 +2,11 @@
 name = "eqrs"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Zero-dependency math expression evaluator with variables"
+repository = "https://github.com/jopo86/eqrs"
+readme = "README.md"
+keywords = ["expression", "evaluate", "evaluator", "variable", "variables"]
+categories = ["mathematics", "parsing", "algorithms"]
 
 [dependencies]
