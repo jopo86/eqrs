@@ -19,7 +19,7 @@ pub fn tokenize(str: &str) -> Result<Vec<Token>, TokenizeError> {
         if c.is_whitespace() {
             i += 1;
             continue;
-        } else if c.is_ascii_digit() {
+        } else if c.is_ascii_digit() || c == '.' {
             let mut j = i;
             loop {
                 j += 1;

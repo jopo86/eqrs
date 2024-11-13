@@ -41,18 +41,24 @@ pub fn calc(expr: &Vec<Token>, var_table: Option<&VarTable>) -> Result<f64, Calc
         return Err(CalcError::TrailingOperator);
     }
 
-    let mut i = 0;
 
     // check adjacent operators
-    while i < expr.len() - 1 {
+    for i in 0..expr.len() - 1 {
         if let (Token::Op(_), Token::Op(_)) = (expr[i], expr[i + 1]) {
             return Err(CalcError::AdjacentOperators);
         }
-        i += 1;
     }
 
+    // check remaining variables
+    for i in 0..expr.len() {
+        if let Token::Var(_) = expr[i] {
+            return Err(CalcError::VarsNotFound)
+        }
+    }
+
+    let mut i = 0;
+
     // recursively evaluate parenthesis
-    i = 0;
     while i < expr.len() {
         if let Token::ParL = expr[i] {
             let j;
