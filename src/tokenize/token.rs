@@ -1,12 +1,14 @@
 use super::operator::*;
+use super::function::*;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Num(f64),
     Op(Op),
     ParL,
     ParR,
     Var(char),
+    Fn(Fn),
 }
 
 #[derive(Debug, PartialEq)]
@@ -33,10 +35,16 @@ impl Token {
     }
 
     pub fn is_valid(c: &char) -> bool {
-        let is_paren =
-            |c: &char| *c == '(' || *c == '[' || *c == '{' || *c == ')' || *c == ']' || *c == '}';
 
-        !(c.is_ascii_digit() || (c.is_ascii_punctuation() && !(Op::is_valid(c) || is_paren(c))))
+        !(c.is_ascii_digit() || (c.is_ascii_punctuation() && !(Op::is_valid(c) || Self::is_par_l(c) || Self::is_par_r(c))))
+    }
+
+    pub fn is_par_l(c: &char) -> bool {
+        *c == '(' || *c == '[' || *c == '{'
+    }
+
+    pub fn is_par_r(c: &char) -> bool {
+        *c == ')' || *c == ']' || *c == '}'
     }
 }
 

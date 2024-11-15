@@ -1,5 +1,6 @@
 pub mod operator;
 pub mod token;
+pub mod function;
 
 use token::{Token, TokenParseError};
 
@@ -36,6 +37,47 @@ pub fn tokenize(str: &str) -> Result<Vec<Token>, TokenizeError> {
             ));
             i = j - 1;
         } else {
+
+            if i + 4 < str.len() && chars[i + 4] {
+                // check 4 letter functions
+                let slice = chars[i..i+3].iter().collect::<String>();
+                if slice == "sqrt" {
+
+                } else if slice == "cbrt" {
+
+                } else if slice == "asin" {
+                    
+                } else if slice == "acos" {
+                    
+                } else if slice == "atan" {
+                    
+                } else if slice == "acsc" {
+                    
+                } else if slice == "asec" {
+                    
+                } else if slice == "atan" {
+                    
+                }
+            }
+            
+            if i + 3 < str.len() {
+                // check 3 letter functions
+                let slice = chars[i..i+2].iter().collect::<String>();
+                if slice == "sin" {
+
+                } else if slice == "cos" {
+
+                } else if slice == "tan" {
+                    
+                } else if slice == "csc" {
+                    
+                } else if slice == "sec" {
+                    
+                } else if slice == "cot" {
+                    
+                }
+            }
+
             match Token::parse(&c) {
                 Ok(tk) => vec.push(tk),
                 Err(e) => return Err(TokenizeError::TokenParseError(e)),
